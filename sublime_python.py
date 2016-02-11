@@ -265,6 +265,23 @@ def system_python():
     return SYSTEM_PYTHON
 
 
+def good_python(full_path):
+    check_command = '{} -c "print("1")"'.format(full_path)
+    try:
+        py_out = subprocess.check_output(
+            check_command,
+            creationflags=CREATION_FLAGS, shell=True)
+    except subprocess.CalledProcessError as e:
+        print("Got error, during check of python interpreter!")
+        print("Ignore this error, if there are some other variants of interpreter")
+        print("Subprocess call was: {}".format(check_command))
+        print("Error and backtrace:\n {}".format(e))
+        return False
+    if py_out == "1":
+        return True
+    return False
+
+
 def project_venv_python(view):
     """
     Attempt to "guess" the virtualenv path location either in the
@@ -337,7 +354,8 @@ def proxy_for(view):
         for detector in python_detectors:
             python = detector()
             if python is not None:
-                break
+                if good_python(" ".join(python)):
+                    break
 
         if not python or not os.path.exists(python[0]):
             show_python_not_found_error(python_detectors)
